@@ -1,5 +1,5 @@
 {
-  "name": "axios",
+  "name": "axios-fork",
   "version": "1.10.0",
   "description": "Promise based HTTP client for the browser and node.js",
   "main": "index.js",
@@ -68,7 +68,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/axios/axios.git"
+    "url": "https://github.com/story-x/axios-fork.git"
   },
   "keywords": [
     "xhr",
