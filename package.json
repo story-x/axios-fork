@@ -1,5 +1,5 @@
 {
-  "name": "axios",
+  "name": "axios-fork",
   "version": "1.12.2",
   "description": "Promise based HTTP client for the browser and node.js",
   "main": "index.js",
@@ -73,7 +73,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/axios/axios.git"
+    "url": "https://github.com/story-x/axios-fork.git"
   },
   "keywords": [
     "xhr",
@@ -85,9 +85,9 @@
   "author": "Matt Zabriskie",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/axios/axios/issues"
+    "url": "https://github.com/story-x/axios-fork/issues"
   },
-  "homepage": "https://axios-http.com",
+  "homepage": "https://github.com/story-x/axios-fork",
   "devDependencies": {
     "@babel/core": "^7.23.9",
     "@babel/preset-env": "^7.23.9",
