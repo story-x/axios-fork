@@ -1,0 +1,93 @@
+name: Sync Upstream Tags
+
+on:
+  workflow_dispatch:
+    inputs:
+      sync_type:
+        description: '同步类型'
+        required: true
+        default: 'latest'
+        type: choice
+        options:
+          - latest
+          - all
+      skip_npm:
+        description: '跳过 NPM 发布'
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    # 每天检查一次新版本 (UTC 时间)
+    - cron: '0 2 * * *'
+
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Make sync script executable
+        run: chmod +x sync-tags.js
+
+      - name: Sync latest tag (scheduled)
+        if: github.event_name == 'schedule'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: node sync-tags.js latest
+
+      - name: Sync tags (manual)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          SKIP_NPM: ${{ github.event.inputs.skip_npm }}
+        run: node sync-tags.js ${{ github.event.inputs.sync_type }}
+
+      - name: Create Release (if new version)
+        if: github.event_name != 'schedule' || success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 获取最新的 tag
+          LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | head -1)
+          if [ ! -z "$LATEST_TAG" ]; then
+            # 检查是否是新创建的 tag
+            if git log --oneline -1 | grep -q "chore: bump version to $LATEST_TAG"; then
+              echo "创建 GitHub Release for $LATEST_TAG"
+              gh release create "$LATEST_TAG" \
+                --title "Release $LATEST_TAG" \
+                --notes "同步官方 axios $LATEST_TAG 版本
+
+              ## 更新内容
+              - 同步官方 axios 的 $LATEST_TAG 版本
+              - 更新包信息指向 story-x/axios-fork
+              - 自动构建和发布到 NPM
+
+              ## 安装
+              \`\`\`bash
+              npm install axios-fork@$LATEST_TAG
+              \`\`\`
+
+              **注意**: 这是官方 axios 的 fork 版本，包含了与上游相同的功能。
+              " \
+                --draft=false
+            fi
+          fi 
