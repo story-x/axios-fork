@@ -229,12 +229,15 @@ class TagSyncManager {
             
             this.log(`准备从版本 ${currentVersion} 更新到 ${newVersion}`);
             
-            // 5. 切换到对应的标签
-            await this.execCommand(`git checkout ${latestTag}`);
-            
-            // 6. 创建新分支进行修改
+            // 5. 直接从标签创建新分支（避免 detached HEAD）
             const branchName = `sync-${latestTag}`;
-            await this.execCommand(`git checkout -b ${branchName}`);
+            try {
+                // 先删除可能存在的同名分支
+                await this.execCommand(`git branch -D ${branchName}`).catch(() => {});
+            } catch (e) {
+                // 忽略错误，分支可能不存在
+            }
+            await this.execCommand(`git checkout -b ${branchName} ${latestTag}`);
             
             // 7. 更新版本信息
             await this.updatePackageJson(newVersion, latestTag);
@@ -285,12 +288,15 @@ class TagSyncManager {
                 this.log(`处理标签 ${tag}...`);
                 const version = tag.replace('v', '');
                 
-                // 切换到标签
-                await this.execCommand(`git checkout ${tag}`);
-                
-                // 创建分支
+                // 直接从标签创建分支（避免 detached HEAD）
                 const branchName = `sync-${tag}`;
-                await this.execCommand(`git checkout -b ${branchName}`);
+                try {
+                    // 先删除可能存在的同名分支
+                    await this.execCommand(`git branch -D ${branchName}`).catch(() => {});
+                } catch (e) {
+                    // 忽略错误，分支可能不存在
+                }
+                await this.execCommand(`git checkout -b ${branchName} ${tag}`);
                 
                 // 更新版本信息
                 await this.updatePackageJson(version, tag);
